@@ -41,7 +41,9 @@ Meteor.methods({
         // Also add the profile.name from the new service.
         query = {};
         query['services.'+_services[i]] = newAccount.services[_services[i]];
-        if (!oldAccount.profile || !oldAccount.profile.name) {
+        if (!(oldAccount.profile && oldAccount.profile.name) &&
+          (newAccount.profile && newAccount.profile.name)
+        ) {
           query['profile.name'] = newAccount.profile.name;
         }
         try {
