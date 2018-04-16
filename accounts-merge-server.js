@@ -21,7 +21,7 @@ Meteor.methods({
     const oldUser = Meteor.users.findOne(oldUserId)
 
     const oldHashedLoginToken = Accounts._hashLoginToken(oldLoginToken)
-    if (!oldUser.services.resume.loginTokens.includes(
+    if (!oldUser.services.resume.loginTokens.find(
       loginToken => loginToken.hashedToken === oldHashedLoginToken
     )) {
       throw new Meteor.Error(403, 'We could not authenticate you as the owner of the old account')
