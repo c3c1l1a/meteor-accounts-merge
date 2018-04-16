@@ -11,17 +11,17 @@ The user can even start two separate accounts, for example one with Google and T
 See this [example implementation](https://github.com/sanjo/meteor-accounts-merge-example) to get started.
 
 ## Installation
-To enable merging of accounts, add the `mikael:accounts-merge` package and at least one login provider package: `accounts-facebook`, `accounts-github`, `accounts-google`, `accounts-meetup`, `accounts-twitter`, `accounts-weibo`, etc., ex:
+To enable merging of accounts, add the `sanjo:accounts-merge` package and at least one login provider package: `accounts-facebook`, `accounts-github`, `accounts-google`, `accounts-meetup`, `accounts-twitter`, `accounts-weibo`, etc., ex:
 
 ``` sh
 $ meteor add accounts-facebook accounts-google accounts-twitter
-$ meteor add mikael:accounts-merge
+$ meteor add sanjo:accounts-merge
 ```
 
 ## Upgrade
 Before upgrading, check the [changelog](https://github.com/sanjo/meteor-accounts-merge/blob/master/History.md) for breaking changes. Then run:
 ``` sh
-$ meteor update mikael:accounts-merge
+$ meteor update sanjo:accounts-merge
 ```
 
 ## Usage

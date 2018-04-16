@@ -1,82 +1,60 @@
-AccountsMerge = {};
+import { check } from 'meteor/check'
+import { Meteor } from 'meteor/meteor'
+import { Accounts } from 'meteor/accounts-base'
+
+AccountsMerge = {}
 
 Meteor.methods({
-
-  // The newAccount will be merged into the oldAccount and the newAccount will
-  // be marked as merged.
-  mergeAccounts: function (oldAccountId, oldLoginToken) {
-    check(oldAccountId, String);
-    check(oldLoginToken, String);
+  // Merge the newAccount into the oldAccount and mark the newAccount as merged
+  mergeAccounts: function (oldUserId, oldLoginToken) {
+    check(oldUserId, String)
+    check(oldLoginToken, String)
 
     // This method (mergeAccounts) is sometimes called an extra time (twice) if
     // the losing user is deleted from the DB using the AccountsMerge.onMerge
     // hook. The hook is executed before the loosing user has been logged
     // out and thus this.userId is null the second time this method is called.
-    if (! this.userId) {
-      return;
+    if (!this.userId) {
+      return
     }
 
-    // Get the old (winning) and new (losing) account details
-    var oldAccount = Meteor.users.findOne(oldAccountId);
+    const oldUser = Meteor.users.findOne(oldUserId)
 
-    const oldHashedLoginToken = Accounts._hashLoginToken(oldLoginToken);
-    if (!oldAccount.services.resume.loginTokens.includes(
+    const oldHashedLoginToken = Accounts._hashLoginToken(oldLoginToken)
+    if (!oldUser.services.resume.loginTokens.includes(
       loginToken => loginToken.hashedToken === oldHashedLoginToken
     )) {
       throw new Meteor.Error(403, 'We could not authenticate you as the owner of the old account')
     }
 
-    var newAccount = Meteor.users.findOne(this.userId);
+    const newUser = Meteor.user()
 
-    // Get the names of the registered oauth services from the Accounts package
-    _services = Accounts.oauth.serviceNames();
-
-    // Move login services from loosing to winning user
-    for (i=0; i<_services.length; i++) {
-
-      if (newAccount.services[_services[i]]) {
-
-        // Remove service from current user to avoid duplicate key error
-        query = {};
-        query['services.'+_services[i]] = "";
-        try {
-          Meteor.users.update (Meteor.userId(), {$unset: query});
-        } catch (e) {
-          console.log('error', e.toString());
-        }
-
-        // Add the service to the old account (we will log back in to this
-        // account later).
-        // Also add the profile.name from the new service.
-        query = {};
-        query['services.'+_services[i]] = newAccount.services[_services[i]];
-        if (!(oldAccount.profile && oldAccount.profile.name) &&
-          (newAccount.profile && newAccount.profile.name)
-        ) {
-          query['profile.name'] = newAccount.profile.name;
-        }
-        try {
-          Meteor.users.update (oldAccountId, {$set: query});
-        } catch (e) {
-          console.log('error', e.toString());
-        }
+    const newUserUpdateQuery = {}
+    const oldUserUpdateQuery = {}
+    for (const serviceName of Accounts.oauth.serviceNames()) {
+      if (newUser.services[serviceName]) {
+        // Remove service from new user to prevent duplicated key error
+        newUserUpdateQuery[`services.${serviceName}`] = ''
+        oldUserUpdateQuery[`services.${serviceName}`] = newUser.services[serviceName]
       }
     }
-    // Mark the losing user as merged, and to which user it was merged with.
-    // mergedWith holds the _id of the winning account.
-    try {
-      Meteor.users.update(newAccount._id, {$set: {mergedWith: oldAccountId}});
-    } catch (e) {
-      console.log('error', e.toString());
+
+    if (!(oldUser.profile && oldUser.profile.name) &&
+      (newUser.profile && newUser.profile.name)
+    ) {
+      oldUserUpdateQuery['profile.name'] = newUser.profile.name
     }
 
-    // Run the server side onMerge() hook if it exists.
+    if (Object.keys(newUserUpdateQuery).length > 0) {
+      Meteor.users.update(newUser._id, {$unset: newUserUpdateQuery})
+    }
+    Meteor.users.update(oldUser._id, {$set: oldUserUpdateQuery})
+
     if (AccountsMerge.onMerge) {
-      oldAccount = Meteor.users.findOne(oldAccount._id);
-      newAccount = Meteor.users.findOne(newAccount._id);
-      AccountsMerge.onMerge(oldAccount, newAccount);
+      AccountsMerge.onMerge(
+        Meteor.users.findOne(oldUser._id),
+        Meteor.users.findOne(newUser._id)
+      )
     }
-
-    return true;
   }
-});
+})

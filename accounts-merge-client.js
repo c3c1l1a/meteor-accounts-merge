@@ -1,57 +1,51 @@
-function createSignInMethodForLoginMethod(logInMethodName) {
-  Meteor[logInMethodName.replace('loginWith', 'signInWith')] = function (options, callback) {
-    Meteor.signInWithExternalService(logInMethodName, options, callback);
-  };
-}
+import { Meteor } from 'meteor/meteor'
+import { Accounts } from 'meteor/accounts-base'
+
+Meteor.startup(function () {
+  getLoginMethodNames().forEach(createSignInMethodForLoginMethod)
+})
 
 function getLoginMethodNames() {
   return Object.keys(Meteor).filter(methodName => methodName.startsWith('loginWith'))
 }
 
-Meteor.startup(function () {
-  _.each(getLoginMethodNames(), createSignInMethodForLoginMethod);
-});
+function createSignInMethodForLoginMethod(logInMethodName) {
+  Meteor[logInMethodName.replace('loginWith', 'signInWith')] = function (options, callback) {
+    Meteor.signInWithExternalService(logInMethodName, options, callback)
+  }
+}
+
 
 Meteor.signInWithExternalService = function (logInMethodName, options, callback) {
+  const oldUserId = Meteor.userId()
+  const oldLoginToken = Accounts._storedLoginToken()
 
-  var oldUserId = Meteor.userId();
-  var oldLoginToken = Accounts._storedLoginToken();
+  callback = typeof callback === 'function' ? callback : function () {}
 
   Meteor[logInMethodName](options, function (error) {
     if (error) {
-      if (typeof callback === 'function') callback (error);
-      return;
+      return callback(error)
     }
 
-    var newUserId = Meteor.userId();
+    const newUserId = Meteor.userId()
 
-    // Not logged in, logging in now.
-    if (!oldUserId) {
-      if (typeof callback === 'function') callback ();
-      return;
+    if (!oldUserId || newUserId === oldUserId) {
+      return callback()
     }
 
-    // Login service has already been added, just logging in
-    if (newUserId == oldUserId) {
-      if (typeof callback === 'function') callback ();
-      return;
-    }
-
-    // Adding the new login service
     Meteor.call('mergeAccounts', oldUserId, oldLoginToken, function (error, result) {
       if (error) {
-        if (typeof callback === 'function') callback (error);
-        return;
+        return callback (error)
       }
 
       // Log back in as the original (destination) user
       Meteor.loginWithToken(oldLoginToken, function (error) {
         if (error) {
-          if (typeof callback === 'function') callback (error);
-          return;
+          return callback (error)
+        } else {
+          return callback (undefined, newUserId)
         }
-        if (typeof callback === 'function') callback (undefined, newUserId);
-      });
-    });
-  });
-};
+      })
+    })
+  })
+}
