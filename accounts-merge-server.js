@@ -4,8 +4,9 @@ Meteor.methods({
 
   // The newAccount will be merged into the oldAccount and the newAccount will
   // be marked as merged.
-  mergeAccounts: function (oldAccountId) {
+  mergeAccounts: function (oldAccountId, oldLoginToken) {
     check(oldAccountId, String);
+    check(oldLoginToken, String);
 
     // This method (mergeAccounts) is sometimes called an extra time (twice) if
     // the losing user is deleted from the DB using the AccountsMerge.onMerge
@@ -17,6 +18,14 @@ Meteor.methods({
 
     // Get the old (winning) and new (losing) account details
     var oldAccount = Meteor.users.findOne(oldAccountId);
+
+    const oldHashedLoginToken = Accounts._hashLoginToken(oldLoginToken);
+    if (!oldAccount.services.resume.loginTokens.includes(
+      loginToken => loginToken.hashedToken === oldHashedLoginToken
+    )) {
+      throw new Meteor.Error(403, 'We could not authenticate you as the owner of the old account')
+    }
+
     var newAccount = Meteor.users.findOne(this.userId);
 
     // Get the names of the registered oauth services from the Accounts package

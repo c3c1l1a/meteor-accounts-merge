@@ -1,6 +1,6 @@
 Package.describe({
   name: 'sanjo:accounts-merge',
-  version: '0.0.11',
+  version: '1.0.0',
   summary: 'Multiple login services for Meteor accounts',
   git: 'https://github.com/sanjo/meteor-accounts-merge.git',
   documentation: 'README.md'

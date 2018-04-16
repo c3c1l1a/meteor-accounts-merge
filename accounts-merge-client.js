@@ -38,8 +38,7 @@ Meteor.signInWithExternalService = function (logInMethodName, options, callback)
     }
 
     // Adding the new login service
-    Meteor.call ('mergeAccounts', oldUserId, function (error, result) {
-
+    Meteor.call('mergeAccounts', oldUserId, oldLoginToken, function (error, result) {
       if (error) {
         if (typeof callback === 'function') callback (error);
         return;
