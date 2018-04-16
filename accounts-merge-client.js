@@ -1,38 +1,23 @@
-function capitalizeWord(word) {
-  return word.charAt(0).toUpperCase() + word.slice(1);
-}
-
-function createMethodForService(service) {
-  // Capitalize the first letter of the service name
-  var serviceName = capitalizeWord(service);
-
-  // Register a meteor method for this service
-  Meteor['signInWith' + serviceName] = function (options, callback) {
-    Meteor.signInWithExternalService ('loginWith' + serviceName, options, callback);
+function createSignInMethodForLoginMethod(logInMethodName) {
+  Meteor[logInMethodName.replace('loginWith', 'signInWith')] = function (options, callback) {
+    Meteor.signInWithExternalService(logInMethodName, options, callback);
   };
 }
 
+function getLoginMethodNames() {
+  return Object.keys(Meteor).filter(methodName => methodName.startsWith('loginWith'))
+}
+
 Meteor.startup(function () {
-
-  // Do nothing if no accounts packages with oauth are loaded
-  if (typeof Accounts !== 'object' || ! Accounts.oauth) {
-    return;
-  }
-
-  // Get the names of the registered oauth services from the Accounts package
-  var services = Accounts.oauth.serviceNames();
-
-  // Create a meteor method for each service
-  _.each(services, createMethodForService);
+  _.each(getLoginMethodNames(), createSignInMethodForLoginMethod);
 });
 
-Meteor.signInWithExternalService = function (service, options, callback) {
+Meteor.signInWithExternalService = function (logInMethodName, options, callback) {
 
   var oldUserId = Meteor.userId();
   var oldLoginToken = Accounts._storedLoginToken();
 
-  Meteor[service](options, function (error) {
-
+  Meteor[logInMethodName](options, function (error) {
     if (error) {
       if (typeof callback === 'function') callback (error);
       return;
