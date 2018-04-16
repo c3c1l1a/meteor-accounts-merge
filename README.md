@@ -8,7 +8,7 @@ The user can even start two separate accounts, for example one with Google and T
 
 ## Example
 
-See this [example implementation](https://github.com/lirbank/meteor-accounts-merge-example) to get started.
+See this [example implementation](https://github.com/sanjo/meteor-accounts-merge-example) to get started.
 
 ## Installation
 To enable merging of accounts, add the `mikael:accounts-merge` package and at least one login provider package: `accounts-facebook`, `accounts-github`, `accounts-google`, `accounts-meetup`, `accounts-twitter`, `accounts-weibo`, etc., ex:
@@ -19,7 +19,7 @@ $ meteor add mikael:accounts-merge
 ```
 
 ## Upgrade
-Before upgrading, check the [changelog](https://github.com/lirbank/meteor-accounts-merge/blob/master/History.md) for breaking changes. Then run:
+Before upgrading, check the [changelog](https://github.com/sanjo/meteor-accounts-merge/blob/master/History.md) for breaking changes. Then run:
 ``` sh
 $ meteor update mikael:accounts-merge
 ```
@@ -70,6 +70,6 @@ AccountsMerge.onMerge = function (winner, loser) {
 * Add support for {{loggingIn}}
 
 ## License
-The MIT License (MIT) (c) Airlab.io
+The MIT License (MIT) (c) Airlab.io, Jonas Aschenbrenner
 
 Accounts Merge was developed as part of the [Domain List](http://domainlist.io/) project.
